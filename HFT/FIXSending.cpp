@@ -20,7 +20,50 @@ protected:
     }
 
     void onMessage(const FIX42::NewOrderSingle& message, const FIX::SessionID&) {
-        // Process the new order
+        FIX::Symbol symbol;
+        FIX::Side side;
+        FIX::OrdType ordType;
+        FIX::OrderQty orderQty;
+        FIX::Price price;
+    
+        message.get(symbol);
+        message.get(side);
+        message.get(ordType);
+        message.get(orderQty);
+        message.get(price);
+    
+        std::string orderType = ordType == FIX::OrdType_MARKET ? "Market" : "Limit";
+        std::string orderSide = side == FIX::Side_BUY ? "Buy" : "Sell";
+    
+        
+        std::cout << "Received " << orderSide << " Order - "
+                  << "Symbol: " << symbol << ", "
+                  << "Quantity: " << orderQty << ", "
+                  << "Price: $" << price << ", "
+                  << "Type: " << orderType << std::endl;
+    
+
+        if (shouldExecuteOrder(price, orderQty)) {
+            executeOrder(symbol, side, orderQty, price);
+        } else {
+            std::cout << "Order not executed: market conditions not met." << std::endl;
+        }
+    }
+
+    bool shouldExecuteOrder(const FIX::Price& price, const FIX::OrderQty& qty) {
+        double marketPrice = getMarketPrice(); 
+        return price <= marketPrice && qty >= 100; 
+    }
+
+    void executeOrder(const FIX::Symbol& symbol, const FIX::Side& side, const FIX::OrderQty& qty, const FIX::Price& price) {
+        std::string orderSide = side == FIX::Side_BUY ? "Buy" : "Sell";
+        std::cout << "Executing " << orderSide << " Order: "
+                  << qty << " shares of " << symbol << " at $" << price << std::endl;
+        processOrderExecution(symbol, qty, price);
+    }
+
+    void processOrderExecution(const FIX::Symbol& symbol, const FIX::OrderQty& qty, const FIX::Price& price) {
+        std::cout << "Order executed for " << qty << " shares of " << symbol << " at $" << price << std::endl;
     }
 
 public:
